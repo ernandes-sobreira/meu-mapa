@@ -138,20 +138,30 @@ async function openChat(pin){
 }
 
 async function loadComments(pinId){
-  const r = await fetch(API_URL+"?action=getComments&pinId="+pinId);
+  const r = await fetch(API_URL + "?action=getComments&pinId=" + encodeURIComponent(pinId));
   const data = await r.json();
 
   const box = document.getElementById("messages");
-  box.innerHTML="";
+  box.innerHTML = "";
 
-  data.comments.forEach(c=>{
+  (data.comments || []).forEach(c => {
     const div = document.createElement("div");
     const dt = new Date(c.createdAt);
 
-    div.style.borderBottom="1px solid #eee";
-    div.style.marginBottom="4px";
+    div.style.borderBottom = "1px solid #eee";
+    div.style.marginBottom = "4px";
+    div.style.padding = "4px 0";
+
+    // se tiver arquivo, monta link
+    let linkHtml = "";
+    if (c.fileUrl) {
+      linkHtml = `<br><a href="${c.fileUrl}" target="_blank">📎 Abrir arquivo</a>`;
+    }
+
     div.innerHTML =
-      `<b>${c.nome}</b> <small>${dt.toLocaleString()}</small><br>${c.mensagem}`;
+      `<b>${c.nome}</b> <small>${dt.toLocaleString()}</small><br>` +
+      `${c.mensagem || ""}` +
+      linkHtml;
 
     box.appendChild(div);
   });
