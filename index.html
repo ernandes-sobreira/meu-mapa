@@ -56,11 +56,15 @@ input, button{
   <div id="messages"></div>
   
   <div class="controls">
-    <input id="nome" placeholder="Seu nome">
-    <input id="msg" placeholder="Mensagem">
-    <button onclick="sendMessage()">Enviar</button>
-  </div>
+  <input id="nome" placeholder="Seu nome">
+  <input id="msg" placeholder="Mensagem">
+
+  <input type="file" id="file"
+         accept="image/*,.pdf">
+
+  <button onclick="sendMessage()">Enviar</button>
 </div>
+
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
@@ -163,18 +167,36 @@ async function sendMessage(){
 
   const nome = document.getElementById("nome").value.trim();
   const msg  = document.getElementById("msg").value.trim();
+  const file = document.getElementById("file").files[0];
 
-  if(!nome || !msg){
-    alert("Preencha nome e mensagem");
+  if(!nome || (!msg && !file)){
+    alert("Preencha nome e mensagem ou anexe um arquivo");
     return;
   }
 
-  const body = new URLSearchParams({
-    action:"addComment",
-    pinId:currentPinId,
-    nome:nome,
-    mensagem:msg
-  });
+  // bloquear vídeo
+  if(file && file.type.startsWith("video/")){
+    alert("Vídeos não são permitidos.");
+    document.getElementById("file").value="";
+    return;
+  }
+
+  const params = {
+    action: "addComment",
+    pinId: currentPinId,
+    nome: nome,
+    mensagem: msg
+  };
+
+  // se houver arquivo
+  if(file){
+    const base64 = await toBase64(file);
+    params.file = base64.split(",")[1];
+    params.fileName = file.name;
+    params.mimeType = file.type;
+  }
+
+  const body = new URLSearchParams(params);
 
   await fetch(API_URL,{
     method:"POST",
@@ -182,9 +204,21 @@ async function sendMessage(){
     body
   });
 
-  document.getElementById("msg").value = "";
+  document.getElementById("msg").value="";
+  document.getElementById("file").value="";
+
   loadComments(currentPinId);
 }
+
+function toBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 </script>
 
 </body>
