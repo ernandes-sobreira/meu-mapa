@@ -7,41 +7,184 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
-body{margin:0; font-family:Arial}
-#map{height:90vh}
+body{
+  margin:0;
+  font-family:Arial;
+}
+#map{
+  height:65vh;
+}
+#chat{
+  display:none;
+  border-top:2px solid #ccc;
+  padding:8px;
+  background:#fafafa;
+  height:35vh;
+  overflow-y:auto;
+}
+#messages{
+  border:1px solid #ddd;
+  padding:6px;
+  margin-bottom:6px;
+  max-height:18vh;
+  overflow-y:auto;
+}
+input, button{
+  padding:6px;
+  font-size:14px;
+}
+.controls{
+  display:flex;
+  gap:4px;
+  flex-wrap:wrap;
+}
+.controls input{
+  flex:1;
+}
 </style>
 </head>
 
 <body>
 
 <h2 style="text-align:center">🌍 Meu Mapa Colaborativo</h2>
-<p style="text-align:center">Clique no mapa para criar um pin</p>
+<p style="text-align:center">Clique no mapa para criar um pin. Clique em um pin para conversar.</p>
 
 <div id="map"></div>
+
+<div id="chat">
+  <h3 id="chat-title"></h3>
+  <div id="messages"></div>
+  
+  <div class="controls">
+    <input id="nome" placeholder="Seu nome">
+    <input id="msg" placeholder="Mensagem">
+    <button onclick="sendMessage()">Enviar</button>
+  </div>
+</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
+const API_URL = "https://script.google.com/macros/s/AKfycbwvKy33oOkQEaLNMCTc5H9U69OjnkF1O35TSVDfuIGKOQ7KAdt28G3TRdagFFPdFCxG/exec";
+
 const map = L.map('map').setView([-15.6,-56.1],4);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
  maxZoom:18
 }).addTo(map);
 
-map.on('click', function(e){
+let currentPinId = null;
 
-  let nome = prompt("Seu nome:");
+// carregar pins salvos
+loadPins();
+
+map.on('click', async function(e){
+
+  const nome = prompt("Seu nome:");
   if(!nome) return;
 
-  let texto = prompt("Mensagem:");
-  if(!texto) texto = "";
+  const titulo = prompt("Título do ponto:");
+  if(!titulo) return;
 
-  L.marker(e.latlng)
-   .addTo(map)
-   .bindPopup("<b>"+nome+"</b><br>"+texto)
-   .openPopup();
+  const mensagem = prompt("Mensagem inicial (opcional):") || "";
 
+  const body = new URLSearchParams({
+    action: 'addPin',
+    lat: e.latlng.lat,
+    lng: e.latlng.lng,
+    nome,
+    titulo,
+    mensagem
+  });
+
+  const r = await fetch(API_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/x-www-form-urlencoded"},
+    body
+  });
+
+  const pin = await r.json();
+  addMarker(pin);
 });
+
+async function loadPins(){
+  const r = await fetch(API_URL + "?action=listPins");
+  const data = await r.json();
+  data.pins.forEach(addMarker);
+}
+
+function addMarker(pin){
+  const marker = L.marker([pin.lat, pin.lng]).addTo(map);
+
+  marker.bindPopup(`<b>${pin.titulo}</b><br>por ${pin.nome}<br><small>Clique para abrir o chat</small>`);
+
+  marker.on("click",()=>{
+    openChat(pin);
+  });
+}
+
+async function openChat(pin){
+  currentPinId = pin.id;
+
+  document.getElementById("chat").style.display = "block";
+  document.getElementById("chat-title").innerText =
+    pin.titulo + " — " + pin.nome;
+
+  loadComments(pin.id);
+}
+
+async function loadComments(pinId){
+  const r = await fetch(API_URL+"?action=getComments&pinId="+pinId);
+  const data = await r.json();
+
+  const box = document.getElementById("messages");
+  box.innerHTML="";
+
+  data.comments.forEach(c=>{
+    const div = document.createElement("div");
+    const dt = new Date(c.createdAt);
+
+    div.style.borderBottom="1px solid #eee";
+    div.style.marginBottom="4px";
+    div.innerHTML =
+      `<b>${c.nome}</b> <small>${dt.toLocaleString()}</small><br>${c.mensagem}`;
+
+    box.appendChild(div);
+  });
+
+  box.scrollTop = box.scrollHeight;
+}
+
+async function sendMessage(){
+  if(!currentPinId){
+    alert("Clique em um pin primeiro");
+    return;
+  }
+
+  const nome = document.getElementById("nome").value.trim();
+  const msg  = document.getElementById("msg").value.trim();
+
+  if(!nome || !msg){
+    alert("Preencha nome e mensagem");
+    return;
+  }
+
+  const body = new URLSearchParams({
+    action:"addComment",
+    pinId:currentPinId,
+    nome:nome,
+    mensagem:msg
+  });
+
+  await fetch(API_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/x-www-form-urlencoded"},
+    body
+  });
+
+  document.getElementById("msg").value = "";
+  loadComments(currentPinId);
+}
 </script>
 
 </body>
