@@ -47,7 +47,10 @@ input, button{
 <body>
 
 <h2 style="text-align:center">🌍 Meu Mapa Colaborativo</h2>
-<p style="text-align:center">Clique no mapa para criar um pin. Clique em um pin para conversar e enviar arquivos.</p>
+<p style="text-align:center">
+  Clique no mapa para criar um pin. Clique em um pin para conversar.<br>
+  Para compartilhar arquivos, cole o link do PDF/imagem no campo de link.
+</p>
 
 <div id="map"></div>
 
@@ -58,7 +61,7 @@ input, button{
   <div class="controls">
     <input id="nome" placeholder="Seu nome">
     <input id="msg" placeholder="Mensagem">
-    <input type="file" id="file" accept="image/*,.pdf">
+    <input id="link" placeholder="Link do arquivo (Drive, etc.)">
     <button onclick="sendMessage()">Enviar</button>
   </div>
 </div>
@@ -166,36 +169,29 @@ async function sendMessage(){
 
   const nome = document.getElementById("nome").value.trim();
   const msg  = document.getElementById("msg").value.trim();
-  const file = document.getElementById("file").files[0];
+  const link = document.getElementById("link").value.trim();
 
-  if (!nome || (!msg && !file)) {
-    alert("Preencha o nome e escreva uma mensagem ou envie um arquivo.");
+  if (!nome || (!msg && !link)) {
+    alert("Preencha o nome e escreva uma mensagem ou informe um link.");
     return;
   }
 
-  if (file && file.type.startsWith("video/")) {
-    alert("Vídeos não são permitidos, apenas imagens e PDF.");
-    document.getElementById("file").value = "";
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("action", "addComment");
-  formData.append("pinId", currentPinId);
-  formData.append("nome", nome);
-  formData.append("mensagem", msg);
-
-  if (file) {
-    formData.append("arquivo", file); // nome bate com e.files.arquivo
-  }
+  const body = new URLSearchParams({
+    action: "addComment",
+    pinId: currentPinId,
+    nome: nome,
+    mensagem: msg,
+    fileUrl: link
+  });
 
   await fetch(API_URL, {
     method: "POST",
-    body: formData
+    headers: {"Content-Type":"application/x-www-form-urlencoded"},
+    body
   });
 
   document.getElementById("msg").value  = "";
-  document.getElementById("file").value = "";
+  document.getElementById("link").value = "";
 
   await loadComments(currentPinId);
 }
