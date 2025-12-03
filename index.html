@@ -7,316 +7,518 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
-
+*{
+  box-sizing:border-box;
+}
 body{
-    margin:0;
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: linear-gradient(135deg,#0f172a,#075985);
+  margin:0;
+  font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  background:linear-gradient(135deg,#0f172a,#0369a1);
+  color:#0f172a;
+}
+
+/* CONTAINER GERAL */
+#page{
+  max-width:1400px;
+  margin:0 auto;
 }
 
 /* TOPO */
 header{
-    background:white;
-    text-align:center;
-    padding:16px 10px;
-    box-shadow:0 4px 14px rgba(0,0,0,0.2);
+  margin:10px 10px 0 10px;
+  background:rgba(255,255,255,0.95);
+  border-radius:14px;
+  padding:14px 18px;
+  box-shadow:0 8px 25px rgba(15,23,42,0.35);
+  display:flex;
+  gap:16px;
+  align-items:flex-start;
 }
 
-header h1{
-    margin:0;
-    font-size:26px;
-}
-header p{
-    margin:6px 0 4px 0;
-    color:#334155;
-    max-width:800px;
-    margin-left:auto;
-    margin-right:auto;
-    font-size:14px;
+header-left{
+  display:block;
+  flex:1.7;
 }
 
-.badges{
-    margin-top:6px;
-}
-.badge{
-    display:inline-block;
-    background:#e0f2fe;
-    color:#075985;
-    padding:4px 10px;
-    border-radius:20px;
-    margin:2px;
-    font-size:11px;
+header-right{
+  display:block;
+  flex:1.3;
 }
 
-/* LAYOUT */
+/* Título */
+#logo-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:4px;
+}
+#logo-title span.icon{
+  font-size:26px;
+}
+#logo-title h1{
+  margin:0;
+  font-size:22px;
+  font-weight:700;
+  letter-spacing:0.03em;
+}
+header-left p{
+  margin:2px 0 4px 0;
+  font-size:13px;
+  color:#334155;
+}
+
+/* Chips / etiquetas */
+.chips{
+  margin-top:4px;
+}
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  font-size:11px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:#e0f2fe;
+  color:#075985;
+  margin-right:4px;
+}
+
+/* Passo a passo / legenda */
+#steps-card{
+  background:#0f172a;
+  color:#e5e7eb;
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:12px;
+}
+#steps-card h3{
+  margin:0 0 4px 0;
+  font-size:13px;
+}
+#steps-card ol{
+  padding-left:18px;
+  margin:4px 0 8px 0;
+}
+#steps-card li{
+  margin-bottom:2px;
+}
+.legend-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+}
+.legend-badge{
+  width:8px;
+  height:8px;
+  border-radius:999px;
+  background:#38bdf8;
+}
+.legend-badge.global{
+  background:#a855f7;
+}
+
+/* LAYOUT MAPA + LATERAL */
 #layout{
-    display:flex;
-    height:calc(100vh - 135px);
-    -webkit-font-smoothing: antialiased;
+  display:flex;
+  height:calc(100vh - 120px);
+  margin:10px;
+  gap:10px;
 }
 
+/* MAPA À ESQUERDA */
+#map-wrapper{
+  flex:2;
+  background:#020617;
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 10px 30px rgba(15,23,42,0.6);
+  position:relative;
+}
 #map{
-    flex:2.3;
+  height:100%;
 }
 
-/* LATERAL */
+/* TAG NO CANTO DO MAPA */
+#map-tag{
+  position:absolute;
+  top:8px;
+  left:12px;
+  z-index:500;
+  background:rgba(15,23,42,0.8);
+  color:#e5e7eb;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:11px;
+}
+
+/* LATERAL À DIREITA */
 #sidebar{
-    flex:1;
-    background:#f8fafc;
-    padding:10px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-    border-left:4px solid #0369a1;
+  flex:1.1;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
 }
 
-/* PAINÉIS */
+/* CARTÕES DE CHAT */
 .panel{
-    background:white;
-    border-radius:10px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.15);
-    padding:10px;
-    display:flex;
-    flex-direction:column;
-    min-height:0;
+  background:rgba(248,250,252,0.97);
+  border-radius:14px;
+  box-shadow:0 10px 30px rgba(15,23,42,0.45);
+  padding:10px 10px;
+  display:flex;
+  flex-direction:column;
+  height:50%;
+  min-height:0;
+  border:1px solid rgba(148,163,184,0.6);
 }
 
 .panel h3{
-    margin:4px 0 6px 0;
-    font-size:15px;
+  margin:2px 0 4px 0;
+  font-size:15px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.panel h3 span.small{
+  font-size:13px;
+  font-weight:400;
+  color:#64748b;
 }
 
-/* INFO */
 .subtitle{
-    font-size:11px;
-    color:#64748b;
-    margin-bottom:4px;
+  font-size:11px;
+  color:#64748b;
+  margin-bottom:6px;
 }
 
-/* MENSAGENS */
-.messages{
-    border:1px solid #e5e7eb;
-    border-radius:6px;
-    padding:6px;
-    height:160px;
-    overflow-y:auto;
-    background:#f1f5f9;
-    font-size:13px;
+/* ÁREAS DE MENSAGENS */
+#messages, #global-messages{
+  border:1px solid #e2e8f0;
+  border-radius:8px;
+  padding:6px;
+  margin-bottom:6px;
+  flex:1;
+  overflow-y:auto;
+  background:#f9fafb;
 }
 
-/* ENTRADA */
-.controls{
-    margin-top:6px;
-    display:flex;
-    gap:5px;
+.msg-block{
+  border-bottom:1px solid #e5e7eb;
+  margin-bottom:4px;
+  padding-bottom:4px;
+  font-size:12px;
 }
-.controls input{
-    padding:6px;
-    font-size:13px;
-    flex:1;
+.msg-block:last-child{
+  border-bottom:none;
 }
 
+/* CAMPOS E BOTÕES */
+input, button{
+  padding:6px;
+  font-size:12px;
+}
+.controls, .global-controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+}
+.controls input, .global-controls input{
+  flex:1;
+  min-width:0;
+}
 button{
-    background:#0369a1;
-    color:white;
-    border:none;
-    padding:7px 10px;
-    border-radius:6px;
-    cursor:pointer;
+  border:none;
+  border-radius:6px;
+  background:#0f766e;
+  color:white;
+  cursor:pointer;
+  padding:6px 10px;
+  white-space:nowrap;
+  font-weight:500;
+  box-shadow:0 1px 2px rgba(15,23,42,0.25);
 }
-
 button:hover{
-    background:#075985;
+  background:#115e59;
+}
+button.secondary{
+  background:#6366f1;
+}
+button.secondary:hover{
+  background:#4f46e5;
 }
 
 /* RESPONSIVO */
-@media(max-width:900px){
-    #layout{flex-direction:column;}
-    #map{height:45vh;}
+@media (max-width:950px){
+  #layout{
+    flex-direction:column;
+    height:auto;
+  }
+  #map-wrapper{
+    height:45vh;
+  }
+  #sidebar{
+    height:auto;
+  }
 }
-
 </style>
 </head>
 
 <body>
+<div id="page">
 
-<header>
-  <h1>🧭 Mapa Científico Colaborativo da Região</h1>
-  <p>
-    Plataforma aberta para registrar <strong>pesquisas em andamento</strong>,
-    grupos de estudo, expedições de campo, monitoramentos ambientais e projetos
-    científicos no território do Pantanal, Cerrado e Amazônia.
-  </p>
-  <div class="badges">
-    <span class="badge">🧪 Pesquisa de campo</span>
-    <span class="badge">🌎 Mapeamento territorial</span>
-    <span class="badge">🤝 Ciência colaborativa</span>
-  </div>
-</header>
-
-<div id="layout">
-
-  <div id="map"></div>
-
-  <div id="sidebar">
-
-    <!-- CHAT DO PIN -->
-    <div class="panel">
-      <h3>💬 Conversa do ponto</h3>
-      <div class="subtitle" id="pin-title">
-        Clique em um pin no mapa para conversar sobre aquela pesquisa.
+  <!-- TOPO / IDENTIDADE -->
+  <header>
+    <header-left>
+      <div id="logo-title">
+        <span class="icon">🧭</span>
+        <h1>Mapa Científico Colaborativo</h1>
       </div>
-
-      <div class="messages" id="messages"></div>
-
-      <div class="controls">
-        <input id="nome" placeholder="Seu nome">
-        <input id="msg" placeholder="Mensagem">
-        <button onclick="sendMessage()">Enviar</button>
+      <p>
+        Plataforma aberta para <strong>mapeamento científico da região</strong>.
+        Cada ponto no mapa representa um <strong>projeto, pesquisa ou grupo de estudo</strong>.
+        As pessoas podem adicionar pins e conversar sobre cada local.
+      </p>
+      <div class="chips">
+        <span class="chip">🧪 Pesquisas em andamento</span>
+        <span class="chip">🌎 Territórios do Pantanal, Amazônia e Cerrado</span>
+        <span class="chip">🤝 Colaboração entre estudantes, docentes e comunidade</span>
       </div>
+    </header-left>
+
+    <header-right>
+      <div id="steps-card">
+        <h3>Como participar</h3>
+        <ol>
+          <li><strong>Clique no mapa</strong> para marcar onde sua pesquisa acontece.</li>
+          <li>Preencha <strong>nome</strong> e <strong>título do estudo</strong>.</li>
+          <li>Use o <strong>chat do ponto</strong> para discutir aquele local.</li>
+          <li>Use o <strong>chat geral</strong> para recados, combinados e avisos da rede.</li>
+        </ol>
+        <div class="legend-row">
+          <span class="legend-badge"></span> <span>Pins e conversas por local</span>
+        </div>
+        <div class="legend-row" style="margin-top:2px;">
+          <span class="legend-badge global"></span> <span>Chat geral de toda a comunidade</span>
+        </div>
+      </div>
+    </header-right>
+  </header>
+
+  <!-- MAPA + LATERAL -->
+  <div id="layout">
+    <div id="map-wrapper">
+      <div id="map-tag">Clique no mapa para cadastrar uma pesquisa nesse local</div>
+      <div id="map"></div>
     </div>
 
-    <!-- CHAT GERAL -->
-    <div class="panel">
-      <h3>🌐 Chat geral da comunidade</h3>
-      <div class="subtitle">
-        Espaço geral para avisos de eventos, chamadas de reunião,
-        dúvidas coletivas e articulações entre projetos.
+    <div id="sidebar">
+      <!-- CHAT DO PONTO -->
+      <div id="pin-chat" class="panel">
+        <h3>💬 Chat do ponto <span id="chat-title-extra" class="small">(nenhum ponto selecionado)</span></h3>
+        <div class="subtitle" id="chat-subtitle">
+          Selecione um pin no mapa ou crie um novo. Aqui aparecem as conversas ligadas a um local específico.
+        </div>
+        <div id="messages"></div>
+        
+        <div class="controls">
+          <input id="nome" placeholder="Seu nome">
+          <input id="msg" placeholder="Mensagem (relatos, dúvidas, observações de campo...)">
+          <button onclick="sendMessage()">Enviar</button>
+        </div>
       </div>
 
-      <div class="messages" id="global-messages"></div>
-
-      <div class="controls">
-        <input id="g-nome" placeholder="Seu nome">
-        <input id="g-msg" placeholder="Mensagem">
-        <button onclick="sendGlobal()">Enviar</button>
-        <button onclick="loadGlobal()">Atualizar</button>
+      <!-- CHAT GERAL -->
+      <div id="global-chat" class="panel">
+        <h3>🌐 Chat geral <span class="small">da rede científica</span></h3>
+        <div class="subtitle">
+          Espaço aberto para todos. Use para recados coletivos, avisos de eventos, dúvidas gerais e articulações.
+        </div>
+        <div id="global-messages"></div>
+        <div class="global-controls">
+          <input id="g-nome" placeholder="Seu nome">
+          <input id="g-msg" placeholder="Mensagem para toda a rede">
+          <button onclick="sendGlobal()">Enviar</button>
+          <button class="secondary" onclick="loadGlobal()">Atualizar</button>
+        </div>
       </div>
     </div>
-
   </div>
-
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
+// URL DA API (Apps Script)
 const API_URL = "https://script.google.com/macros/s/AKfycbwCutn7t2piEqfqk_I1RvjostsIWBojIFkQfWIGS1vMryFLAILqpIl44kXxMmxWHMIN/exec";
 
 const map = L.map('map').setView([-15.6,-56.1],4);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(map);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:18
+}).addTo(map);
 
 let currentPinId = null;
 
+// carrega pins e chat geral ao abrir
 loadPins();
 loadGlobal();
 
-map.on('click', async e=>{
+/* ---------- MAPA E PINS ---------- */
+
+map.on('click', async function(e){
   const nome = prompt("Seu nome:");
   if(!nome) return;
 
-  const titulo = prompt("Título da pesquisa nesse local:");
+  const titulo = prompt("Título da pesquisa ou atividade nesse local:");
   if(!titulo) return;
 
   const body = new URLSearchParams({
-    action:"addPin",
-    lat:e.latlng.lat,
-    lng:e.latlng.lng,
+    action: 'addPin',
+    lat: e.latlng.lat,
+    lng: e.latlng.lng,
     nome,
     titulo,
-    mensagem:""
+    mensagem: ""
   });
 
-  const r = await fetch(API_URL,{method:"POST",body});
+  const r = await fetch(API_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/x-www-form-urlencoded"},
+    body
+  });
+
   const pin = await r.json();
   addMarker(pin);
 });
 
 async function loadPins(){
-  const r = await fetch(API_URL+"?action=listPins");
-  const d = await r.json();
-  d.pins.forEach(addMarker);
+  const r = await fetch(API_URL + "?action=listPins");
+  const data = await r.json();
+  (data.pins || []).forEach(addMarker);
 }
 
 function addMarker(pin){
-  const m=L.marker([pin.lat,pin.lng]).addTo(map);
-  m.bindPopup("<b>"+pin.titulo+"</b><br>por "+pin.nome);
-  m.on("click",()=>openChat(pin));
+  const m = L.marker([pin.lat, pin.lng]).addTo(map);
+  m.bindPopup(`<b>${pin.titulo}</b><br>por ${pin.nome}<br><small>Clique para abrir o chat desse local</small>`);
+  m.on("click", ()=> openChat(pin));
 }
 
+/* ---------- CHAT DO PIN ---------- */
+
 async function openChat(pin){
-  currentPinId=pin.id;
-  document.getElementById("pin-title").innerText =
-    pin.titulo + " — " + pin.nome;
+  currentPinId = pin.id;
+  document.getElementById("chat-title-extra").innerText =
+    `— ${pin.titulo} (por ${pin.nome})`;
+  document.getElementById("chat-subtitle").innerText =
+    "Conversas ligadas a este local. Use para discutir resultados, logística, observações de campo e ideias.";
+  await loadComments(pin.id);
+}
 
-  const r=await fetch(API_URL+"?action=getComments&pinId="+pin.id);
-  const d=await r.json();
+async function loadComments(pinId){
+  const r = await fetch(API_URL + "?action=getComments&pinId=" + encodeURIComponent(pinId));
+  const data = await r.json();
 
-  const box=document.getElementById("messages");
-  box.innerHTML="";
-  d.comments.forEach(c=>{
-      box.innerHTML +=
-        "<b>"+c.nome+"</b> "+new Date(c.createdAt).toLocaleString()+
-        "<br>"+c.mensagem+"<hr>";
+  const box = document.getElementById("messages");
+  box.innerHTML = "";
+
+  (data.comments || []).forEach(c => {
+    const div = document.createElement("div");
+    const dt = new Date(c.createdAt);
+
+    div.className = "msg-block";
+
+    div.innerHTML =
+      `<b>${c.nome}</b> <small>${new Date(dt).toLocaleString()}</small><br>` +
+      `${c.mensagem || ""}`;
+
+    box.appendChild(div);
   });
-  box.scrollTop=box.scrollHeight;
+
+  box.scrollTop = box.scrollHeight;
 }
 
 async function sendMessage(){
-  if(!currentPinId){
-    alert("Selecione um ponto no mapa primeiro.");
+  if (!currentPinId) {
+    alert("Clique em um pin primeiro para enviar mensagem no chat do ponto.");
     return;
   }
 
-  const nome=document.getElementById("nome").value.trim();
-  const msg=document.getElementById("msg").value.trim();
+  const nome = document.getElementById("nome").value.trim();
+  const msg  = document.getElementById("msg").value.trim();
 
-  if(!nome||!msg)return;
+  if (!nome || !msg) {
+    alert("Preencha o nome e escreva uma mensagem.");
+    return;
+  }
 
-  const body=new URLSearchParams({
-    action:"addComment",
-    pinId:currentPinId,
-    nome,
-    mensagem:msg
+  const body = new URLSearchParams({
+    action: "addComment",
+    pinId: currentPinId,
+    nome: nome,
+    mensagem: msg
   });
 
-  await fetch(API_URL,{method:"POST",body});
-  document.getElementById("msg").value="";
-  openChat({id:currentPinId,titulo:"",nome:""});
+  await fetch(API_URL, {
+    method: "POST",
+    headers: {"Content-Type":"application/x-www-form-urlencoded"},
+    body
+  });
+
+  document.getElementById("msg").value  = "";
+
+  await loadComments(currentPinId);
 }
 
+/* ---------- CHAT GERAL ---------- */
+
 async function loadGlobal(){
-  const r=await fetch(API_URL+"?action=getGlobal");
-  const d=await r.json();
+  const r = await fetch(API_URL + "?action=getGlobal");
+  const data = await r.json();
 
-  const box=document.getElementById("global-messages");
-  box.innerHTML="";
+  const box = document.getElementById("global-messages");
+  box.innerHTML = "";
 
-  d.messages.forEach(c=>{
-    box.innerHTML +=
-      "<b>"+c.nome+"</b> "+new Date(c.createdAt).toLocaleString()+
-      "<br>"+c.mensagem+"<hr>";
+  (data.messages || []).forEach(c => {
+    const div = document.createElement("div");
+    const dt = new Date(c.createdAt);
+
+    div.className = "msg-block";
+
+    div.innerHTML =
+      `<b>${c.nome}</b> <small>${new Date(dt).toLocaleString()}</small><br>` +
+      `${c.mensagem || ""}`;
+
+    box.appendChild(div);
   });
 
-  box.scrollTop=box.scrollHeight;
+  box.scrollTop = box.scrollHeight;
 }
 
 async function sendGlobal(){
-  const nome=document.getElementById("g-nome").value.trim();
-  const msg=document.getElementById("g-msg").value.trim();
+  const nome = document.getElementById("g-nome").value.trim();
+  const msg  = document.getElementById("g-msg").value.trim();
 
-  if(!nome||!msg)return;
+  if (!nome || !msg) {
+    alert("Preencha o nome e a mensagem.");
+    return;
+  }
 
-  const body=new URLSearchParams({
-    action:"addGlobal",
-    nome,
-    mensagem:msg
+  const body = new URLSearchParams({
+    action: "addGlobal",
+    nome: nome,
+    mensagem: msg
   });
 
-  await fetch(API_URL,{method:"POST",body});
+  await fetch(API_URL, {
+    method: "POST",
+    headers: {"Content-Type":"application/x-www-form-urlencoded"},
+    body
+  });
 
-  document.getElementById("g-msg").value="";
-  loadGlobal();
+  document.getElementById("g-msg").value  = "";
+
+  await loadGlobal();
 }
 </script>
 
