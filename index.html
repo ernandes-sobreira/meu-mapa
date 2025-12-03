@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Meu Mapa Compartilhado</title>
+<title>Meu Mapa Colaborativo</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
@@ -16,10 +16,29 @@ body{
   background:#f2f4f7;
 }
 
+/* TOPO */
+header{
+  text-align:center;
+  padding:8px 4px 4px 4px;
+  background:#ffffff;
+  box-shadow:0 1px 3px rgba(0,0,0,0.1);
+  position:relative;
+  z-index:10;
+}
+header h1{
+  margin:0;
+  font-size:22px;
+}
+header p{
+  margin:4px 0 6px 0;
+  font-size:12px;
+  color:#555;
+}
+
 /* LAYOUT GERAL: MAPA + LATERAL */
-#app{
+#layout{
   display:flex;
-  height:100vh;
+  height:calc(100vh - 70px); /* tela inteira menos o cabeçalho */
 }
 
 /* MAPA À ESQUERDA */
@@ -115,22 +134,9 @@ button:hover{
   background:#1d4ed8;
 }
 
-/* TOPO SOBRE O MAPA – TÍTULO */
-#topbar{
-  position:absolute;
-  top:8px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(255,255,255,0.9);
-  padding:6px 10px;
-  border-radius:999px;
-  box-shadow:0 1px 4px rgba(0,0,0,0.15);
-  font-size:12px;
-}
-
 /* RESPONSIVO: EM TELAS MUITO ESTREITAS, FICA EMPILHADO */
 @media (max-width:900px){
-  #app{
+  #layout{
     flex-direction:column;
   }
   #map{
@@ -150,16 +156,17 @@ button:hover{
 
 <body>
 
-<div id="topbar">
-  🌍 Meu Mapa Colaborativo — clique no mapa para criar um ponto.  
-  Chats à direita: do ponto e geral.
-</div>
+<header>
+  <h1>🌍 Meu Mapa Colaborativo</h1>
+  <p>Clique no mapa para criar um pin. Clique em um pin para abrir o chat daquele local.  
+     Para imagens, cole o link (ex: PNG/JPG). Imagens aparecem dentro da mensagem.</p>
+</header>
 
-<div id="app">
+<div id="layout">
   <div id="map"></div>
 
   <div id="sidebar">
-    <!-- CHAT DO PIN -->
+    <!-- CHAT DO PONTO -->
     <div id="pin-chat" class="panel">
       <h3 id="chat-title">💬 Chat do ponto</h3>
       <div class="subtitle" id="chat-subtitle">
