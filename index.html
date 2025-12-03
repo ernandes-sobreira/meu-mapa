@@ -11,16 +11,22 @@ body{
   margin:0;
   font-family:Arial;
 }
-#map{
-  height:65vh;
+h2,h3{
+  margin:8px 0;
 }
+#map{
+  height:50vh;
+}
+
+/* Chat por PIN */
 #chat{
   display:none;
   border-top:2px solid #ccc;
   padding:8px;
   background:#fafafa;
-  height:35vh;
+  max-height:30vh;
   overflow-y:auto;
+  margin-bottom:8px;
 }
 #messages{
   border:1px solid #ddd;
@@ -29,17 +35,46 @@ body{
   max-height:18vh;
   overflow-y:auto;
 }
+
+/* Chat geral */
+#global-chat{
+  border-top:2px solid #999;
+  padding:8px;
+  background:#f0f0f0;
+  max-height:35vh;
+  overflow-y:auto;
+}
+#global-messages{
+  border:1px solid #ccc;
+  padding:6px;
+  margin-bottom:6px;
+  max-height:22vh;
+  overflow-y:auto;
+}
+
 input, button{
   padding:6px;
   font-size:14px;
 }
-.controls{
+.controls, .global-controls{
   display:flex;
   gap:4px;
   flex-wrap:wrap;
 }
-.controls input{
+.controls input, .global-controls input{
   flex:1;
+}
+
+.msg-block{
+  border-bottom:1px solid #eee;
+  margin-bottom:4px;
+  padding-bottom:4px;
+}
+.msg-block img{
+  max-width:100%;
+  max-height:180px;
+  border-radius:6px;
+  margin-top:4px;
 }
 </style>
 </head>
@@ -48,12 +83,13 @@ input, button{
 
 <h2 style="text-align:center">🌍 Meu Mapa Colaborativo</h2>
 <p style="text-align:center">
-  Clique no mapa para criar um pin. Clique em um pin para conversar.<br>
-  Para compartilhar arquivos, cole o link do PDF/imagem no campo de link.
+  Clique no mapa para criar um pin. Clique em um pin para abrir o chat daquele local.<br>
+  Para imagens, cole o link (ex: PNG/JPG). Imagens aparecem dentro da mensagem.
 </p>
 
 <div id="map"></div>
 
+<!-- CHAT POR PIN -->
 <div id="chat">
   <h3 id="chat-title"></h3>
   <div id="messages"></div>
@@ -61,8 +97,21 @@ input, button{
   <div class="controls">
     <input id="nome" placeholder="Seu nome">
     <input id="msg" placeholder="Mensagem">
-    <input id="link" placeholder="Link do arquivo (Drive, etc.)">
+    <input id="link" placeholder="Link de imagem ou arquivo (opcional)">
     <button onclick="sendMessage()">Enviar</button>
+  </div>
+</div>
+
+<!-- CHAT GERAL -->
+<div id="global-chat">
+  <h3>💬 Chat geral</h3>
+  <div id="global-messages"></div>
+  <div class="global-controls">
+    <input id="g-nome" placeholder="Seu nome">
+    <input id="g-msg" placeholder="Mensagem">
+    <input id="g-link" placeholder="Link de imagem ou arquivo (opcional)">
+    <button onclick="sendGlobal()">Enviar</button>
+    <button onclick="loadGlobal()">Atualizar</button>
   </div>
 </div>
 
@@ -79,8 +128,11 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
 
 let currentPinId = null;
 
-// carregar pins já salvos
+// carrega pins e chat geral ao abrir
 loadPins();
+loadGlobal();
+
+// -------- MAPA E PINS --------
 
 map.on('click', async function(e){
   const nome = prompt("Seu nome:");
@@ -122,6 +174,8 @@ function addMarker(pin){
   m.on("click", ()=> openChat(pin));
 }
 
+// -------- CHAT POR PIN --------
+
 async function openChat(pin){
   currentPinId = pin.id;
   document.getElementById("chat").style.display = "block";
@@ -141,19 +195,23 @@ async function loadComments(pinId){
     const div = document.createElement("div");
     const dt = new Date(c.createdAt);
 
-    div.style.borderBottom = "1px solid #eee";
-    div.style.marginBottom = "4px";
-    div.style.padding = "4px 0";
+    div.className = "msg-block";
 
-    let linkHtml = "";
+    let mediaHtml = "";
     if (c.fileUrl) {
-      linkHtml = `<br><a href="${c.fileUrl}" target="_blank">📎 Abrir arquivo</a>`;
+      const clean = c.fileUrl.split("?")[0].toLowerCase();
+      if (clean.endsWith(".png") || clean.endsWith(".jpg") || clean.endsWith(".jpeg") ||
+          clean.endsWith(".gif") || clean.endsWith(".webp")) {
+        mediaHtml = `<br><img src="${c.fileUrl}" alt="imagem">`;
+      } else {
+        mediaHtml = `<br><a href="${c.fileUrl}" target="_blank">📎 Abrir arquivo</a>`;
+      }
     }
 
     div.innerHTML =
-      `<b>${c.nome}</b> <small>${dt.toLocaleString()}</small><br>` +
+      `<b>${c.nome}</b> <small>${new Date(dt).toLocaleString()}</small><br>` +
       `${c.mensagem || ""}` +
-      linkHtml;
+      mediaHtml;
 
     box.appendChild(div);
   });
@@ -172,7 +230,7 @@ async function sendMessage(){
   const link = document.getElementById("link").value.trim();
 
   if (!nome || (!msg && !link)) {
-    alert("Preencha o nome e escreva uma mensagem ou informe um link.");
+    alert("Preencha o nome e escreva uma mensagem ou cole um link.");
     return;
   }
 
@@ -194,6 +252,72 @@ async function sendMessage(){
   document.getElementById("link").value = "";
 
   await loadComments(currentPinId);
+}
+
+// -------- CHAT GERAL --------
+
+async function loadGlobal(){
+  const r = await fetch(API_URL + "?action=getGlobal");
+  const data = await r.json();
+
+  const box = document.getElementById("global-messages");
+  box.innerHTML = "";
+
+  (data.messages || []).forEach(c => {
+    const div = document.createElement("div");
+    const dt = new Date(c.createdAt);
+
+    div.className = "msg-block";
+
+    let mediaHtml = "";
+    if (c.fileUrl) {
+      const clean = c.fileUrl.split("?")[0].toLowerCase();
+      if (clean.endsWith(".png") || clean.endsWith(".jpg") || clean.endsWith(".jpeg") ||
+          clean.endsWith(".gif") || clean.endsWith(".webp")) {
+        mediaHtml = `<br><img src="${c.fileUrl}" alt="imagem">`;
+      } else {
+        mediaHtml = `<br><a href="${c.fileUrl}" target="_blank">📎 Abrir arquivo</a>`;
+      }
+    }
+
+    div.innerHTML =
+      `<b>${c.nome}</b> <small>${new Date(dt).toLocaleString()}</small><br>` +
+      `${c.mensagem || ""}` +
+      mediaHtml;
+
+    box.appendChild(div);
+  });
+
+  box.scrollTop = box.scrollHeight;
+}
+
+async function sendGlobal(){
+  const nome = document.getElementById("g-nome").value.trim();
+  const msg  = document.getElementById("g-msg").value.trim();
+  const link = document.getElementById("g-link").value.trim();
+
+  if (!nome || (!msg && !link)) {
+    alert("Preencha o nome e escreva uma mensagem ou cole um link.");
+    return;
+  }
+
+  const body = new URLSearchParams({
+    action: "addGlobal",
+    nome: nome,
+    mensagem: msg,
+    fileUrl: link
+  });
+
+  await fetch(API_URL, {
+    method: "POST",
+    headers: {"Content-Type":"application/x-www-form-urlencoded"},
+    body
+  });
+
+  document.getElementById("g-msg").value  = "";
+  document.getElementById("g-link").value = "";
+
+  await loadGlobal();
 }
 </script>
 
