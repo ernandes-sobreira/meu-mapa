@@ -83,7 +83,7 @@ header-left p{
   margin-right:4px;
 }
 
-/* Passo a passo / legenda */
+/* Card "Como participar" */
 #steps-card{
   background:#0f172a;
   color:#e5e7eb;
@@ -144,14 +144,16 @@ header-left p{
   position:absolute;
   top:8px;
   left:12px;
-  z-index:500;
+  z-index:600;
   background:rgba(15,23,42,0.8);
   color:#e5e7eb;
   padding:4px 8px;
   border-radius:999px;
   font-size:11px;
 }
-  #toggle-sidebar{
+
+/* BOTÃO ESCONDER/MOSTRAR CHATS */
+#toggle-sidebar{
   position:absolute;
   top:8px;
   right:12px;
@@ -322,7 +324,7 @@ button.secondary:hover{
   </header>
 
   <!-- MAPA + LATERAL -->
-   <div id="layout">
+  <div id="layout">
     <div id="map-wrapper">
       <div id="map-tag">Clique no mapa para cadastrar uma pesquisa nesse local</div>
       <button id="toggle-sidebar" onclick="toggleSidebar()">⮜ esconder chats</button>
@@ -330,7 +332,6 @@ button.secondary:hover{
     </div>
 
     <div id="sidebar">
-
       <!-- CHAT DO PONTO -->
       <div id="pin-chat" class="panel">
         <h3>💬 Chat do ponto <span id="chat-title-extra" class="small">(nenhum ponto selecionado)</span></h3>
@@ -538,13 +539,14 @@ async function sendGlobal(){
 
   await loadGlobal();
 }
-  function toggleSidebar(){
+
+/* ---------- ESCONDER / MOSTRAR LATERAL ---------- */
+function toggleSidebar(){
   const sidebar = document.getElementById('sidebar');
   const btn = document.getElementById('toggle-sidebar');
-
   const isHidden = sidebar.style.display === 'none';
 
-  if (isHidden) {
+  if (isHidden){
     sidebar.style.display = 'flex';
     btn.textContent = '⮜ esconder chats';
   } else {
@@ -552,12 +554,11 @@ async function sendGlobal(){
     btn.textContent = '⮞ mostrar chats';
   }
 
-  // dá um pequeno tempo pro layout mudar e avisa o mapa
+  // Recalcula o tamanho do mapa depois da mudança
   setTimeout(() => {
     map.invalidateSize();
   }, 300);
 }
-
 </script>
 
 </body>
