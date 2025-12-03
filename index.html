@@ -47,7 +47,7 @@ input, button{
 <body>
 
 <h2 style="text-align:center">🌍 Meu Mapa Colaborativo</h2>
-<p style="text-align:center">Clique no mapa para criar um pin. Clique em um pin para conversar.</p>
+<p style="text-align:center">Clique no mapa para criar um pin. Clique em um pin para conversar e enviar arquivos.</p>
 
 <div id="map"></div>
 
@@ -56,14 +56,11 @@ input, button{
   <div id="messages"></div>
   
   <div class="controls">
-  <input id="nome" placeholder="Seu nome">
-  <input id="msg" placeholder="Mensagem">
-
-  <!-- NOVO: campo de arquivo -->
-  <input type="file" id="file"
-         accept="image/*,.pdf">
-
-  <button onclick="sendMessage()">Enviar</button>
+    <input id="nome" placeholder="Seu nome">
+    <input id="msg" placeholder="Mensagem">
+    <input type="file" id="file" accept="image/*,.pdf">
+    <button onclick="sendMessage()">Enviar</button>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -74,16 +71,15 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwvKy33oOkQEaLNMCTc5H9U
 const map = L.map('map').setView([-15.6,-56.1],4);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
- maxZoom:18
+  maxZoom:18
 }).addTo(map);
 
 let currentPinId = null;
 
-// carregar pins salvos
+// carregar pins já salvos
 loadPins();
 
 map.on('click', async function(e){
-
   const nome = prompt("Seu nome:");
   if(!nome) return;
 
@@ -114,27 +110,21 @@ map.on('click', async function(e){
 async function loadPins(){
   const r = await fetch(API_URL + "?action=listPins");
   const data = await r.json();
-  data.pins.forEach(addMarker);
+  (data.pins || []).forEach(addMarker);
 }
 
 function addMarker(pin){
-  const marker = L.marker([pin.lat, pin.lng]).addTo(map);
-
-  marker.bindPopup(`<b>${pin.titulo}</b><br>por ${pin.nome}<br><small>Clique para abrir o chat</small>`);
-
-  marker.on("click",()=>{
-    openChat(pin);
-  });
+  const m = L.marker([pin.lat, pin.lng]).addTo(map);
+  m.bindPopup(`<b>${pin.titulo}</b><br>por ${pin.nome}<br><small>Clique para abrir o chat</small>`);
+  m.on("click", ()=> openChat(pin));
 }
 
 async function openChat(pin){
   currentPinId = pin.id;
-
   document.getElementById("chat").style.display = "block";
   document.getElementById("chat-title").innerText =
     pin.titulo + " — " + pin.nome;
-
-  loadComments(pin.id);
+  await loadComments(pin.id);
 }
 
 async function loadComments(pinId){
@@ -152,7 +142,6 @@ async function loadComments(pinId){
     div.style.marginBottom = "4px";
     div.style.padding = "4px 0";
 
-    // se tiver arquivo, monta link
     let linkHtml = "";
     if (c.fileUrl) {
       linkHtml = `<br><a href="${c.fileUrl}" target="_blank">📎 Abrir arquivo</a>`;
@@ -170,7 +159,7 @@ async function loadComments(pinId){
 }
 
 async function sendMessage(){
-  if(!currentPinId){
+  if (!currentPinId) {
     alert("Clique em um pin primeiro");
     return;
   }
@@ -179,60 +168,37 @@ async function sendMessage(){
   const msg  = document.getElementById("msg").value.trim();
   const file = document.getElementById("file").files[0];
 
-  // precisa ter pelo menos mensagem OU arquivo
-  if(!nome || (!msg && !file)){
+  if (!nome || (!msg && !file)) {
     alert("Preencha o nome e escreva uma mensagem ou envie um arquivo.");
     return;
   }
 
-  // bloquear vídeos
-  if(file && file.type.startsWith("video/")){
+  if (file && file.type.startsWith("video/")) {
     alert("Vídeos não são permitidos, apenas imagens e PDF.");
     document.getElementById("file").value = "";
     return;
   }
 
-  const params = {
-    action: "addComment",
-    pinId: currentPinId,
-    nome: nome,
-    mensagem: msg
-  };
+  const formData = new FormData();
+  formData.append("action", "addComment");
+  formData.append("pinId", currentPinId);
+  formData.append("nome", nome);
+  formData.append("mensagem", msg);
 
-  // se tiver arquivo, converte pra base64
-  if(file){
-    const base64 = await toBase64(file);
-    params.file = base64.split(",")[1];   // só a parte depois da vírgula
-    params.fileName = file.name;
-    params.mimeType = file.type;
+  if (file) {
+    formData.append("arquivo", file); // nome bate com e.files.arquivo
   }
 
-  const body = new URLSearchParams(params);
-
-  await fetch(API_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/x-www-form-urlencoded"},
-    body
+  await fetch(API_URL, {
+    method: "POST",
+    body: formData
   });
 
-  // limpa campos
-  document.getElementById("msg").value = "";
+  document.getElementById("msg").value  = "";
   document.getElementById("file").value = "";
 
-  // recarrega comentários
-  loadComments(currentPinId);
+  await loadComments(currentPinId);
 }
-
-// função auxiliar pra transformar arquivo em base64
-function toBase64(file){
-  return new Promise((resolve,reject)=>{
-    const reader = new FileReader();
-    reader.onload  = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 </script>
 
 </body>
